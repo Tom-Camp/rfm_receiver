@@ -1,0 +1,16 @@
+[Unit]
+Description=RFM9x Receiver
+After=network.target
+
+[Service]
+Type=simple
+User=[USERNAME]
+Group=spi
+WorkingDirectory=/[ABSOLUTE PATH TO REPO]/rfm_receiver
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/[ABSOLUTE PATH TO REPO]/rfm_receiver/venv/bin/python3 /[ABSOLUTE PATH TO REPO]/rfm_receiver/receive.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

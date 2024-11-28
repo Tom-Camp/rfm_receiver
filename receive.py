@@ -84,9 +84,10 @@ class LoraReceiver:
             "key": sid,
             "data": sensor_data,
         }
+        token = os.getenv("PTOKEN")
         headers: dict = {
             "Content-Type": "application/json",
-            "Authorization": os.getenv("PTOKEN"),
+            "Authorization": f"Bearer {token}",
         }
         try:
             response = requests.post(url, json=post_data, headers=headers)

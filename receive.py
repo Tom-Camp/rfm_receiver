@@ -94,8 +94,8 @@ class LoraReceiver:
 
             logger.info(f"Status Code: {response.status_code}")
             logger.info(f"Response JSON: {response.json()}")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An error occurred: {e}")
+        except requests.exceptions.RequestException as er:
+            logger.error(f"An error occurred: {er}")
 
 
 if __name__ == "__main__":

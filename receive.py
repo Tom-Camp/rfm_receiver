@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import zlib
 from datetime import datetime
 
 import adafruit_rfm9x
@@ -57,7 +56,7 @@ class LoraReceiver:
     def receive_data(self) -> tuple:
         try:
             packet = self.rfm9x.receive()
-            if packet is not None and self._check_data(packet=packet):
+            if packet is not None:
                 try:
                     packet_data = msgpack.unpackb(packet)
                     sid = packet_data.get("sender_id", "UNKNOWN")
@@ -78,13 +77,6 @@ class LoraReceiver:
             return None, None
 
     @staticmethod
-    def _check_data(packet: bytearray) -> bool:
-        message_data, message_checksum = packet[:-4], packet[-4:]
-        calculated_checksum = zlib.crc32(message_data)
-        received_checksum = int.from_bytes(message_checksum, "big")
-        return True if calculated_checksum == received_checksum else False
-
-    @staticmethod
     def _post_data(sid: str, sensor_data: dict):
         url = str(os.getenv("PURL"))
         post_data: dict = {
@@ -102,8 +94,8 @@ class LoraReceiver:
 
             logger.info(f"Status Code: {response.status_code}")
             logger.info(f"Response JSON: {response.json()}")
-        except requests.exceptions.RequestException as er:
-            logger.error(f"An error occurred: {er}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":

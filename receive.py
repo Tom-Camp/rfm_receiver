@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 import time
@@ -56,9 +57,11 @@ class LoraReceiver:
     def receive_data(self) -> tuple:
         try:
             packet = self.rfm9x.receive()
+            received_data = io.BytesIO(packet)
             if packet is not None:
                 try:
-                    packet_data = msgpack.unpackb(packet)
+                    received_data.seek(0)
+                    packet_data = msgpack.unpackb(received_data)
                     sid = packet_data.get("sender_id", "UNKNOWN")
                     sensor_data = packet_data.get("data", {})
                     received_at = datetime.now().strftime("%Y-%m-%d %H:%M")

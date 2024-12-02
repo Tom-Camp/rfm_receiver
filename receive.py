@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 import time
@@ -8,9 +7,11 @@ import adafruit_rfm9x
 import board
 import busio
 import digitalio
+import msgpack
 import requests
 from dotenv import load_dotenv
 from loguru import logger
+from msgpack.exceptions import ExtraData, FormatError, OutOfData, UnpackValueError
 
 load_dotenv()
 logger.remove()
@@ -57,19 +58,17 @@ class LoraReceiver:
             packet = self.rfm9x.receive()
             if packet is not None:
                 try:
-                    packet_text = packet.decode()
-                except UnicodeDecodeError:
-                    packet_text = packet
-                packet_data = json.loads(packet_text)
+                    packet_data = msgpack.unpackb(packet)
+                    sid = packet_data.get("sender_id", "UNKNOWN")
+                    sensor_data = packet_data.get("data", {})
+                    received_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-                sid = packet_data.get("sender_id", "UNKNOWN")
-                sensor_data = packet_data.get("data", {})
-                received_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-                if sid and sensor_data:
-                    sensor_data["time"] = received_at
-                    self._post_data(sid=sid, sensor_data=sensor_data)
-                    return sid, sensor_data
+                    if sid and sensor_data:
+                        sensor_data["time"] = received_at
+                        self._post_data(sid=sid, sensor_data=sensor_data)
+                        return sid, sensor_data
+                except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
+                    logger.error(f"Unpack error: {er}")
 
             return None, None
 

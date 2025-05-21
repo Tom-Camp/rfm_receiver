@@ -58,7 +58,7 @@ class LoraReceiver:
         try:
             packet = self.rfm9x.receive(with_ack=True)
             if packet is not None:
-                self._process_packet()
+                self._process_packet(packet=packet)
         except IOError as er:
             logger.error(f"Error receiving data: {er}")
 

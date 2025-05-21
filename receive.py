@@ -58,18 +58,18 @@ class LoraReceiver:
         try:
             packet = self.rfm9x.receive(with_ack=True)
             if packet is not None:
-                try:
-                    packet_data = msgpack.unpackb(packet)
-                    sender_id: str = packet_data.get("sender_id", "")
-                    logger.info(f"Received packet from {sender_id}")
-                    try:
-                        self._post_data(packet_data=packet_data.get("data", {}))
-                    except requests.exceptions.RequestException as er:
-                        logger.error(f"Error posting data: {er}")
-                except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
-                    logger.error(f"Unpack error: {er}")
+                self._process_packet()
         except IOError as er:
             logger.error(f"Error receiving data: {er}")
+
+    def _process_packet(self, packet: bytearray):
+        try:
+            packet_data = msgpack.unpackb(packet)
+            sender_id: str = packet_data.get("sender_id", "")
+            logger.info(f"Received packet from {sender_id}")
+            self._post_data(packet_data=packet_data.get("data", {}))
+        except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
+            logger.error(f"Unpack error: {er}")
 
     @staticmethod
     def _post_data(packet_data: dict):
@@ -88,9 +88,7 @@ class LoraReceiver:
         try:
             response = requests.post(url, json=post_data, headers=headers)
             response.raise_for_status()
-
             logger.info(f"Status Code: {response.status_code}")
-            logger.info(f"Response JSON: {response.json()}")
         except requests.exceptions.RequestException as er:
             logger.error(f"An error occurred: {er}")
 

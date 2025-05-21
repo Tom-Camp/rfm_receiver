@@ -15,7 +15,7 @@ from msgpack.exceptions import ExtraData, FormatError, OutOfData, UnpackValueErr
 
 load_dotenv()
 logger.remove()
-log_dir: Path = Path().home().joinpath("logs")
+log_dir: Path = Path().joinpath("logs")
 
 logger.add(
     log_dir.joinpath("rfm_receiver_errors.log"),

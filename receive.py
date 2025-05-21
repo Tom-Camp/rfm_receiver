@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-from datetime import datetime
+from pathlib import Path
 
 import adafruit_rfm9x
 import board
@@ -15,16 +15,17 @@ from msgpack.exceptions import ExtraData, FormatError, OutOfData, UnpackValueErr
 
 load_dotenv()
 logger.remove()
+log_dir: Path = Path().home().joinpath("logs")
 
 logger.add(
-    "/var/log/rfm_receiver_errors.log",
+    log_dir.joinpath("rfm_receiver_errors.log"),
     level="ERROR",
     rotation="500 MB",
     retention="30 days",
 )
 
 logger.add(
-    "/var/log/rfm_receiver_info.log",
+    log_dir.joinpath("rfm_receiver_info.log"),
     level="INFO",
     rotation="500 MB",
     retention="30 days",
@@ -53,47 +54,41 @@ class LoraReceiver:
         self.rfm9x.enable_crc = True
         self.rfm9x.receive_timeout = 5.0
 
-    def receive_data(self) -> tuple:
+    def receive_data(self):
         try:
-            packet = self.rfm9x.receive()
+            packet = self.rfm9x.receive(with_ack=True)
             if packet is not None:
-                try:
-                    packet_data = msgpack.unpackb(packet)
-                    sid = packet_data.get("sender_id", "UNKNOWN")
-                    sensor_data = packet_data.get("data", {})
-                    received_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-                    if sid and sensor_data:
-                        sensor_data["time"] = received_at
-                        self._post_data(sid=sid, sensor_data=sensor_data)
-                        return sid, sensor_data
-                except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
-                    logger.error(f"Unpack error: {er}")
-
-            return None, None
-
+                self._process_packet(packet=packet)
         except IOError as er:
             logger.error(f"Error receiving data: {er}")
-            return None, None
+
+    def _process_packet(self, packet: bytearray):
+        try:
+            packet_data = msgpack.unpackb(packet)
+            sender_id: str = packet_data.get("sender_id", "")
+            logger.info(f"Received packet from {sender_id}")
+            self._post_data(packet_data=packet_data.get("data", {}))
+        except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
+            logger.error(f"Unpack error: {er}")
 
     @staticmethod
-    def _post_data(sid: str, sensor_data: dict):
-        url = str(os.getenv("PURL"))
+    def _post_data(packet_data: dict):
+        device_id: str = packet_data.get("device_id", "")
+        sensor_data: dict = packet_data.get("data", {})
+        api_key: str = packet_data.get("api_key", "")
+        url = str(os.getenv("API_URL"))
         post_data: dict = {
-            "key": sid,
+            "device_id": device_id,
             "data": sensor_data,
         }
-        token = os.getenv("PTOKEN")
         headers: dict = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
+            "X-API-KEY": api_key,
         }
         try:
             response = requests.post(url, json=post_data, headers=headers)
             response.raise_for_status()
-
             logger.info(f"Status Code: {response.status_code}")
-            logger.info(f"Response JSON: {response.json()}")
         except requests.exceptions.RequestException as er:
             logger.error(f"An error occurred: {er}")
 
@@ -104,12 +99,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            sender_id, data = receiver.receive_data()
-
-            if sender_id is not None:
-                logger.info(f"Received from {sender_id}:")
-                logger.info(f"Received message: {data}")
-
+            receiver.receive_data()
             time.sleep(0.1)
         except KeyboardInterrupt:
             print("\nExiting...")

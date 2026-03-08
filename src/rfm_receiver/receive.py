@@ -36,11 +36,11 @@ class LoraReceiver:
         self.rfm9x.signal_bandwidth = 125000
         self.rfm9x.coding_rate = 5
         self.rfm9x.enable_crc = True
-        self.rfm9x.receive_timeout = 5.0
+        self.receive_timeout = 5.0
 
     def receive_data(self):
         try:
-            packet = self.rfm9x.receive(with_ack=True)
+            packet = self.rfm9x.receive(with_ack=True, timeout=self.receive_timeout)
             if packet is not None:
                 self._process_packet(packet=packet)
         except IOError as er:
@@ -49,6 +49,9 @@ class LoraReceiver:
     def _process_packet(self, packet: bytearray):
         try:
             packet_data = msgpack.unpackb(packet)
+            if not isinstance(packet_data, dict):
+                logger.error(f"Unexpected packet format: {type(packet_data)}")
+                return
             sender_id: str = packet_data.get("sender_id", "")
             logger.info(f"Received packet from {sender_id}")
             self._post_data(packet_data=packet_data.get("data", {}))
@@ -60,8 +63,11 @@ class LoraReceiver:
         device_id: str = packet_data.get("device_id", "")
         api_key: str = packet_data.get("api_key", "")
         sensor_data: dict = packet_data.get("data", {})
-        url = str(os.getenv("API_URL"))
-        post_data: dict = {sensor_data}
+        url = os.getenv("API_URL")
+        if not url:
+            logger.error("API_URL is not set")
+            return
+        post_data: dict = sensor_data
         headers: dict = {
             "Content-Type": "application/json",
             "X-API-KEY": api_key,
@@ -89,5 +95,3 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Error in main loop: {e}")
             time.sleep(1)
-        finally:
-            pass

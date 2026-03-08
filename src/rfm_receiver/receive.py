@@ -1,7 +1,5 @@
 import os
-import sys
 import time
-from pathlib import Path
 
 import adafruit_rfm9x
 import board
@@ -13,25 +11,11 @@ from dotenv import load_dotenv
 from loguru import logger
 from msgpack.exceptions import ExtraData, FormatError, OutOfData, UnpackValueError
 
+from rfm_receiver.utils.logging_config import configure_logging
+
 load_dotenv()
-logger.remove()
-log_dir: Path = Path().joinpath("logs")
 
-logger.add(
-    log_dir.joinpath("rfm_receiver_errors.log"),
-    level="ERROR",
-    rotation="500 MB",
-    retention="30 days",
-)
-
-logger.add(
-    log_dir.joinpath("rfm_receiver_info.log"),
-    level="INFO",
-    rotation="500 MB",
-    retention="30 days",
-)
-
-logger.add(sys.stderr, level="INFO")
+configure_logging()
 
 
 class LoraReceiver:
@@ -74,16 +58,14 @@ class LoraReceiver:
     @staticmethod
     def _post_data(packet_data: dict):
         device_id: str = packet_data.get("device_id", "")
-        sensor_data: dict = packet_data.get("data", {})
         api_key: str = packet_data.get("api_key", "")
+        sensor_data: dict = packet_data.get("data", {})
         url = str(os.getenv("API_URL"))
-        post_data: dict = {
-            "device_id": device_id,
-            "data": sensor_data,
-        }
+        post_data: dict = {sensor_data}
         headers: dict = {
             "Content-Type": "application/json",
             "X-API-KEY": api_key,
+            "X-Device-Id": device_id,
         }
         try:
             response = requests.post(url, json=post_data, headers=headers)
@@ -107,3 +89,5 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Error in main loop: {e}")
             time.sleep(1)
+        finally:
+            pass

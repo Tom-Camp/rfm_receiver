@@ -61,7 +61,10 @@ class TestReceiveData:
 
 class TestProcessPacket:
     def test_valid_packet_calls_post_data(self, receiver, mocker):
-        payload = {"sender_id": "node1", "data": {"device_id": "d1", "api_key": "k", "data": {}}}
+        payload = {
+            "sender_id": "node1",
+            "data": {"device_id": "d1", "api_key": "k", "data": {}},
+        }
         packet = msgpack.packb(payload)
         mock_post = mocker.patch.object(receiver, "_post_data")
 
@@ -69,7 +72,9 @@ class TestProcessPacket:
 
         mock_post.assert_called_once_with(packet_data=payload["data"])
 
-    def test_non_dict_packet_logs_error_and_does_not_call_post_data(self, receiver, mocker):
+    def test_non_dict_packet_logs_error_and_does_not_call_post_data(
+        self, receiver, mocker
+    ):
         packet = msgpack.packb([1, 2, 3])
         mock_post = mocker.patch.object(receiver, "_post_data")
         mock_logger = mocker.patch("rfm_receiver.receive.logger")
@@ -115,7 +120,9 @@ class TestPostData:
         monkeypatch.setenv("API_URL", "http://example.com/api")
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
-        mock_post = mocker.patch("rfm_receiver.receive.requests.post", return_value=mock_response)
+        mock_post = mocker.patch(
+            "rfm_receiver.receive.requests.post", return_value=mock_response
+        )
 
         LoraReceiver._post_data(self._make_packet_data())
 
@@ -151,7 +158,9 @@ class TestPostData:
     def test_http_error_logs_error(self, mocker, monkeypatch):
         monkeypatch.setenv("API_URL", "http://example.com/api")
         mock_response = mocker.MagicMock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404")
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "404"
+        )
         mocker.patch("rfm_receiver.receive.requests.post", return_value=mock_response)
         mock_logger = mocker.patch("rfm_receiver.receive.logger")
 

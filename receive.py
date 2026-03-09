@@ -83,7 +83,8 @@ class LoraReceiver:
         }
         headers: dict = {
             "Content-Type": "application/json",
-            "X-API-KEY": api_key,
+            "X-API-Key": api_key,
+            "X-Device-Id": device_id,
         }
         try:
             response = requests.post(url, json=post_data, headers=headers)

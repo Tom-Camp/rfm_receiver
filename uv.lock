@@ -60,15 +60,15 @@ wheels = [
 
 [[package]]
 name = "adafruit-circuitpython-rfm9x"
-version = "2.2.22"
+version = "2.2.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "adafruit-blinka" },
     { name = "adafruit-circuitpython-busdevice" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/ae/c0e6b3a0c1f68ada7d2ca2afac9754ab689f2d18874dea9aa628a38d4f99/adafruit_circuitpython_rfm9x-2.2.22.tar.gz", hash = "sha256:99386960abd83d694a3b750993496ca817d970bd92c9a4fe9ba07ebbcddaf101", size = 36297, upload-time = "2025-12-16T21:06:49.335Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/c7/f36e6b020c4aec185d46f9d3a0903e0935e26f188aaf22d813dd769e66de/adafruit_circuitpython_rfm9x-2.2.17.tar.gz", hash = "sha256:17fb6f272142311025425fc83712c59f591af8d3ef31aa93f901591ce2408791", size = 39764, upload-time = "2024-10-07T22:19:42.458Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/5c/b0bc5afa44c7757705e0ba2baf24f177665ea4b934077d84859adaed39f6/adafruit_circuitpython_rfm9x-2.2.22-py3-none-any.whl", hash = "sha256:0ee3dd2f13a71971bf3d5d69fd176af9b1932914296f5205a4fba5e3f936d7df", size = 14813, upload-time = "2025-12-16T21:06:48.354Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/33/9a2446ff29f86f04542031ae64cbeb8917961e631cf576facf596bc1040b/adafruit_circuitpython_rfm9x-2.2.17-py3-none-any.whl", hash = "sha256:475f16e3bf7939ea1ceed2e846b9fbfdf787f15f0dc0408ba5d36104c2809df5", size = 15131, upload-time = "2024-10-07T22:19:40.477Z" },
 ]
 
 [[package]]
@@ -591,7 +591,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adafruit-circuitpython-rfm9x", specifier = ">=2.2.17,<3" },
+    { name = "adafruit-circuitpython-rfm9x", specifier = "==2.2.17" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
     { name = "msgpack", specifier = ">=1.1.0,<2" },
     { name = "pytest", specifier = ">=9.0.2" },

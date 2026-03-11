@@ -67,25 +67,28 @@ class LoraReceiver:
             packet_data = msgpack.unpackb(packet)
             sender_id: str = packet_data.get("sender_id", "")
             logger.info(f"Received packet from {sender_id}")
-            self._post_data(packet_data=packet_data.get("data", {}))
+            prefix = sender_id.upper()
+            device_id = os.getenv(f"{prefix}_DEVICE_ID", "")
+            api_key = os.getenv(f"{prefix}_API_KEY", "")
+            headers: dict = {
+                "Content-Type": "application/json",
+                "X-API-Key": api_key,
+                "X-Device-Id": device_id,
+            }
+            if not device_id or not api_key:
+                logger.error(f"No credentials found for sender_id '{sender_id}'")
+                return
+            self._post_data(
+                sensor_data=packet_data.get("data", {}),
+                headers=headers,
+            )
         except (ExtraData, FormatError, OutOfData, UnpackValueError) as er:
             logger.error(f"Unpack error: {er}")
 
     @staticmethod
-    def _post_data(packet_data: dict):
-        device_id: str = packet_data.get("device_id", "")
-        sensor_data: dict = packet_data.get("data", {})
-        api_key: str = packet_data.get("api_key", "")
+    def _post_data(sensor_data: dict, headers: dict[str, str]):
         url = str(os.getenv("API_URL"))
-        post_data: dict = {
-            "device_id": device_id,
-            "data": sensor_data,
-        }
-        headers: dict = {
-            "Content-Type": "application/json",
-            "X-API-Key": api_key,
-            "X-Device-Id": device_id,
-        }
+        post_data: dict = sensor_data.get("data", {})
         try:
             response = requests.post(url, json=post_data, headers=headers)
             response.raise_for_status()
